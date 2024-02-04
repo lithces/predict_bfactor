@@ -47,15 +47,22 @@ class TransformerModel(pl.LightningModule):
         self.transformer_encoder = TransformerEncoder(encoder_layers, num_layers)
 
         # self.linear = nn.Linear(hidden_dim, output_dim)
-        self.mlp = nn.Sequential(
-            nn.Linear(hidden_dim, hidden_dim // 2),
-            nn.ReLU(),
-            nn.Linear(hidden_dim // 2, hidden_dim // 4),
-            nn.ReLU(),
-            nn.Linear(hidden_dim // 4, hidden_dim // 8),
-            nn.ReLU(),
-            nn.Linear(hidden_dim // 8, output_dim)
-        )
+        self.mlp = nn.Linear(hidden_dim, output_dim)
+        # self.mlp = nn.Sequential(
+        #     nn.Linear(hidden_dim, hidden_dim // 2),
+        #     nn.ReLU(),
+        #     nn.Linear(hidden_dim // 2, hidden_dim // 4),
+        #     nn.ReLU(),
+        #     nn.Linear(hidden_dim // 4, hidden_dim // 8),
+        #     nn.ReLU(),
+        #     nn.Linear(hidden_dim // 8, output_dim)
+        # )
+        self.init_weights()
+    def init_weights(self):
+        initrange = 0.1    
+        self.mlp.bias.data.zero_()
+        self.mlp.weight.data.uniform_(-initrange, initrange)
+
     def forward(self, src, src_key_padding_mask):
         src = self.pos_encoder(self.embedding(src))
         output = self.transformer_encoder(src, src_key_padding_mask=src_key_padding_mask)
