@@ -69,7 +69,7 @@ hidden_dim = 1024
 num_layers = 4
 num_heads = 8
 dropout_rate = 0.1
-batch_size = 64
+batch_size = 128
 max_epochs = 100
 
 
