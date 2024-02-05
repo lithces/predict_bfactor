@@ -64,6 +64,7 @@ class BatchSeqDataset(LocalDataset):
 import tqdm
 ds_train = BatchSeqDataset('./ds/mds_train', ctx_size=512)
 ds_val = BatchSeqDataset('./ds/mds_valid', ctx_size=512)
+ds_test = BatchSeqDataset('./ds/mds_valid', ctx_size=512)
 
 dl_debug = DataLoader(ds_train, shuffle=True, batch_size=4)
 
@@ -89,7 +90,7 @@ hidden_dim = 512 // 8
 num_layers = 8
 num_heads = 8
 dropout_rate = 0.1
-batch_size = 64
+batch_size = 4
 max_epochs = 100
 
 
@@ -100,11 +101,13 @@ dl_val = DataLoader(ds_val, shuffle=False, batch_size=batch_size)
 
 
 #%%
-# model = TransformerModel(vocab_sz, output_dim, hidden_dim, num_layers, num_heads, dropout_rate)
-
-model = TransformerModel.load_from_checkpoint("lightning_logs/version_0/checkpoints/epoch=73-step=65120.ckpt", \
-    vocab_sz=vocab_sz, output_dim=output_dim, hidden_dim=hidden_dim,\
-    num_layers=num_layers, num_heads=num_heads, dropout_rate=dropout_rate)
+model_fn = '/home/lithtp/sanofi/bfactor/lightning_logs/version_0/checkpoints/epoch=99-step=22000.ckpt'
+model = TransformerModel.\
+    load_from_checkpoint(model_fn, \
+    hparams_file='lightning_logs/version_0/hparams.yaml')
+# model = TransformerModel.load_from_checkpoint("lightning_logs/version_0/checkpoints/epoch=21-step=4840.ckpt", \
+#     vocab_sz=vocab_sz, output_dim=output_dim, hidden_dim=hidden_dim,\
+#     num_layers=num_layers, num_heads=num_heads, dropout_rate=dropout_rate)
 #%%
 import tqdm
 model.eval()

@@ -38,12 +38,12 @@ class PositionalEncoding(nn.Module):
         return self.dropout(x)
 
 class TransformerModel(pl.LightningModule):
-    def __init__(self, vocab_sz, output_dim, hidden_dim, num_layers, num_heads, dropout_rate):
+    def __init__(self, vocab_sz, output_dim, hidden_dim, num_layers, num_heads, dropout_rate, itm_dim):
         super(TransformerModel, self).__init__()
         self.save_hyperparameters()
         self.embedding = nn.Embedding(vocab_sz, hidden_dim)
         self.pos_encoder = PositionalEncoding(hidden_dim, dropout_rate)
-        encoder_layers = TransformerEncoderLayer(hidden_dim, num_heads, hidden_dim, dropout_rate)
+        encoder_layers = TransformerEncoderLayer(hidden_dim, num_heads, itm_dim, dropout_rate)
         self.transformer_encoder = TransformerEncoder(encoder_layers, num_layers)
 
         # self.linear = nn.Linear(hidden_dim, output_dim)
@@ -57,7 +57,7 @@ class TransformerModel(pl.LightningModule):
         #     nn.ReLU(),
         #     nn.Linear(hidden_dim // 8, output_dim)
         # )
-        self.init_weights()
+        # self.init_weights()
     def init_weights(self):
         initrange = 0.1    
         self.mlp.bias.data.zero_()
@@ -90,6 +90,6 @@ class TransformerModel(pl.LightningModule):
         self.log('val_loss', loss)
         
     def configure_optimizers(self):
-        optimizer = optim.Adam(self.parameters(), lr=1e-3)
+        optimizer = optim.Adam(self.parameters(), lr=1e-4)
         return optimizer
 

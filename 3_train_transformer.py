@@ -65,18 +65,19 @@ from transformermodel import *
 #%%
 vocab_sz = 22
 output_dim = 1
-hidden_dim = 512 
-num_layers = 4
-num_heads = 4
+hidden_dim = 256
+itm_dim = 256
+num_layers = 8
+num_heads = 8
 dropout_rate = 0.1
 batch_size = 128*2
-max_epochs = 100
+max_epochs = 200
 
 
 dl_train = DataLoader(ds_train, shuffle=True, batch_size=batch_size)
 dl_val = DataLoader(ds_val, shuffle=False, batch_size=batch_size)
 
 
-model = TransformerModel(vocab_sz, output_dim, hidden_dim, num_layers, num_heads, dropout_rate)
+model = TransformerModel(vocab_sz, output_dim, hidden_dim, num_layers, num_heads, dropout_rate, itm_dim)
 trainer = pl.Trainer(max_epochs=max_epochs)
 trainer.fit(model, dl_train, dl_val)
