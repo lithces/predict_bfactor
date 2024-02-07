@@ -38,7 +38,7 @@ class PositionalEncoding(nn.Module):
         return self.dropout(x)
 
 class TransformerModel(pl.LightningModule):
-    def __init__(self, vocab_sz, output_dim, hidden_dim, num_layers, num_heads, dropout_rate, itm_dim):
+    def __init__(self, vocab_sz, output_dim, hidden_dim, num_layers, num_heads, dropout_rate, itm_dim, input_feat_dim=None):
         super(TransformerModel, self).__init__()
         self.save_hyperparameters()
         self.embedding = nn.Embedding(vocab_sz, hidden_dim)
@@ -58,35 +58,48 @@ class TransformerModel(pl.LightningModule):
         #     nn.Linear(hidden_dim // 8, output_dim)
         # )
         # self.init_weights()
+        self.input_feat_dim = input_feat_dim
+        if input_feat_dim:
+            self.feat_linear_map = nn.Linear(input_feat_dim, hidden_dim)
     def init_weights(self):
         initrange = 0.1    
         self.mlp.bias.data.zero_()
         self.mlp.weight.data.uniform_(-initrange, initrange)
 
-    def forward(self, src, src_key_padding_mask):
-        src = self.pos_encoder(self.embedding(src))
+    def forward(self, src, src_key_padding_mask, feat=None):
+        x = self.embedding(src)
+        # print(x.shape)
+        # print(feat.shape)
+        if self.input_feat_dim:
+            x = x + self.feat_linear_map(feat)
+        src = self.pos_encoder(x)
         output = self.transformer_encoder(src, src_key_padding_mask=src_key_padding_mask)
         output = self.mlp(output)
         return output
     
-    def training_step(self, batch, batch_idx):
-        src, tgt, mask = batch['c_res_id'], batch['y'], batch['mask']
+    def comp_loss(self, batch, batch_idx):
+        '''
+        computed as the mean of errors for non-padded elements
+        '''
+        feat = None
+        if self.input_feat_dim:
+            src, tgt, mask, feat = batch['c_res_id'], batch['y'], batch['mask'], batch['feat']
+        else:
+            src, tgt, mask = batch['c_res_id'], batch['y'], batch['mask']
         src = src.transpose(0,1).contiguous()
+        feat = feat.transpose(0,1).contiguous()
         keep_ind = (~mask).to(torch.float)
-        output = self(src, src_key_padding_mask = mask).transpose(0,1)[:,:,0]
+        output = self(src, src_key_padding_mask = mask, feat=feat).transpose(0,1)[:,:,0]
         loss = ( (output*keep_ind - tgt*keep_ind)**2).sum() / keep_ind.sum()
+        return loss
+
+    def training_step(self, batch, batch_idx):
+        loss = self.comp_loss(batch, batch_idx)
         self.log('train_loss', loss)
         return loss
     
     def validation_step(self, batch, batch_idx):
-        src, tgt, mask = batch['c_res_id'], batch['y'], batch['mask']
-        src = src.transpose(0,1).contiguous()
-        keep_ind = (~mask).to(torch.float)
-        
-        output = self(src, src_key_padding_mask = mask).transpose(0,1)[:,:,0]
-
-        loss = ( (output*keep_ind - tgt*keep_ind)**2).sum() / keep_ind.sum()
-
+        loss = self.comp_loss(batch, batch_idx)
         self.log('val_loss', loss)
         
     def configure_optimizers(self):

@@ -57,7 +57,7 @@ with MDSWriter(out=out_root, columns=columns, compression=compression) as out:
             ,'c_res_id' :residual_id[ii, :c_L] \
             ,'c_ss_id' : ss_id[ii, :c_L] \
             ,'c_coord' : coord[ii, :c_L] \
-            ,'c_chi' : chi[ii] \
+            ,'c_chi' : chi[ii, :c_L] \
             ,'id_orig': int(ii) \
             ,'y': y[ii, :c_L, 0]
         }
